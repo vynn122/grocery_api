@@ -120,27 +120,27 @@ exports.updateZin = async (req, res) => {
   }
 };
 
-exports.deleteZin = async (req, res) => {
-  try {
-    await Brand.findByIdAndDelete(req.params.id).then((brand) => {
-      if (!brand) {
-        return res.status(404).json({
-          success: false,
-          message: "Brand not found",
-        });
-      }
-      res.status(200).json({
-        success: true,
-        message: `Brand ${brand.name} delete successful`,
-      });
-    });
-  } catch (err) {
-    res.status(500).json({
-      success: false,
-      message: "Error: " + err.message,
-    });
-  }
-};
+// exports.deleteZin = async (req, res) => {
+//   try {
+//     await Brand.findByIdAndDelete(req.params.id).then((brand) => {
+//       if (!brand) {
+//         return res.status(404).json({
+//           success: false,
+//           message: "Brand not found",
+//         });
+//       }
+//       res.status(200).json({
+//         success: true,
+//         message: `Brand ${brand.name} delete successful`,
+//       });
+//     });
+//   } catch (err) {
+//     res.status(500).json({
+//       success: false,
+//       message: "Error: " + err.message,
+//     });
+//   }
+// };
 
 exports.delete = async (req, res) => {
   try {

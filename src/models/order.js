@@ -81,16 +81,21 @@ const orderSchema = new mongoose.Schema(
       required: true,
     },
 
-    shippingAddressId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "ShippingAddress",
-      required: true,
-    },
+    // shippingAddressId: {
+    //   type: mongoose.Schema.Types.ObjectId,
+    //   ref: "ShippingAddress",
+    //   required: true,
+    // },
 
     orderStatus: {
       type: String,
-      enum: ["Processing", "Shipped", "Delivered", "Cancelled"],
-      default: "Processing",
+      enum: ["Processing", "Pending", "Completed", "Delivered", "Cancelled"],
+      default: "Pending",
+    },
+    promoId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "PromoCode",
+      default: null,
     },
   },
   { timestamps: true }

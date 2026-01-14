@@ -56,7 +56,7 @@ const productSchema = new mongoose.Schema(
   { timestamps: true }
 );
 //
-// 🔥 VIRTUAL FIELD: FINAL PRICE
+// VIRTUAL FIELD: FINAL PRICE
 //
 productSchema.virtual("finalPrice").get(function () {
   if (!this.discount || this.discount === 0) return this.price;
@@ -65,7 +65,7 @@ productSchema.virtual("finalPrice").get(function () {
 });
 
 //
-// 🔥 ENABLE VIRTUALS IN RESPONSE
+// ENABLE VIRTUALS IN RESPONSE
 //
 productSchema.set("toJSON", { virtuals: true });
 productSchema.set("toObject", { virtuals: true });

@@ -12,6 +12,9 @@ const wishListRoute = require("./src/routes/wishList.route");
 const orderRoute = require("./src/routes/order.route");
 const ShippingAddressRoute = require("./src/routes/shippingAddress.route");
 const authRoute = require("./src/routes/auth.route");
+const promoRoute = require("./src/routes/promocode.route");
+const paymentRoute = require("./src/routes/payment.route");
+const reviewRouter = require("./src/routes/review.route");
 
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
@@ -44,6 +47,9 @@ app.use("/api", [
   orderRoute,
   ShippingAddressRoute,
   authRoute,
+  promoRoute,
+  paymentRoute,
+  reviewRouter,
 ]);
 // app.use("/api", require("./src/routes/product.route"));
 // app.use("/api", require("./src/routes/category.route"));

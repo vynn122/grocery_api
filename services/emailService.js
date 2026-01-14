@@ -10,7 +10,7 @@ const transporter = nodemailer.createTransport({
 
 exports.sendEmails = async (to, otp) => {
   await transporter.sendMail({
-    from: `Lion App <${process.env.MAILER_EMAIL}>`,
+    from: `Grocery Shop <${process.env.MAILER_EMAIL}>`,
     to,
     subject: "⚡ Your OTP Code – [${}]",
     html: `
@@ -97,7 +97,7 @@ exports.sendEmails = async (to, otp) => {
 
 exports.sendEmail = async (to, otp) => {
   await transporter.sendMail({
-    from: `Lion App <${process.env.MAILER_EMAIL}>`,
+    from: `Grocery Shop <${process.env.MAILER_EMAIL}>`,
     to,
     subject: `Your OTP Code [${otp}] `,
     html: `
@@ -114,9 +114,7 @@ exports.sendEmail = async (to, otp) => {
           <td>
 
             <!-- LOGO -->
-            <img src="https://res.cloudinary.com/dlob9mwy3/image/upload/v1763962944/photo_2025-11-13_10-53-42_s8zuo8.jpg"
-                 alt="Food Lion Logo"
-                 style="width:140px; border-radius:20px;">
+      
 
             <!-- Title -->
             <h1 style="

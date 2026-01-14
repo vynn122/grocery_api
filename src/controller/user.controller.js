@@ -5,12 +5,14 @@ const SMSService = require("../utils/sms");
 const OTPService = require("../utils/otp");
 const emailService = require("../../services/emailService");
 const OTPModel = require("../models/otpModel");
+const cloudinary = require("../config/cloudinary");
 
 exports.sendOTP = async (req, res) => {
   const { email } = req.body;
   const isUserExist = await User.findOne({ email });
   if (isUserExist) {
     return res.status(400).json({
+      success: false,
       message: `User ${isUserExist.email} already register`,
     });
   }
@@ -26,23 +28,26 @@ exports.sendOTP = async (req, res) => {
 
   await emailService.sendEmail(email, otp);
 
-  res.json({ message: "OTP sent to your email" });
+  res.status(200).json({ success: true, message: "OTP sent to your email" });
 };
 exports.verifyOTP = async (req, res) => {
   const { email, otp } = req.body;
   const record = await OTPModel.findOne({ email });
 
-  if (!record) return res.status(400).json({ message: "OTP not found" });
+  if (!record)
+    return res.status(400).json({ success: false, message: "OTP not found" });
   if (record.expiresAt < Date.now())
-    return res.status(400).json({ message: "OTP expired" });
+    return res.status(400).json({ success: false, message: "OTP expired" });
   if (record.otp != otp)
-    return res.status(400).json({ message: "Invalid OTP" });
+    return res.status(400).json({ success: false, message: "Invalid OTP" });
   await User.updateOne({ email }, { isVerified: true });
 
-  res.json({ message: "OTP verified", verified: true });
+  res
+    .status(200)
+    .json({ success: true, message: "OTP verified", verified: true });
 };
 exports.register = async (req, res) => {
-  const { email, password } = req.body;
+  const { username, email, password } = req.body;
   const isUserExist = await User.findOne({ email });
   if (isUserExist) {
     return res.status(400).json({
@@ -59,11 +64,10 @@ exports.register = async (req, res) => {
 
   const salt = await bcrypt.genSalt(10);
   const hashPassword = await bcrypt.hash(password, salt);
-  // req.body.password = hashPassword;
 
-  // const user = new User(req.body);
   const user = new User({
-    ...req.body,
+    username: username,
+    email: email,
     password: hashPassword,
     role: "user",
     isVerified: true,
@@ -85,81 +89,44 @@ exports.register = async (req, res) => {
   });
 };
 
-exports.registerMain = async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    const isUserExist = await User.findOne({ email });
-    if (isUserExist) {
-      return res.status(400).json({
-        message: `User ${isUserExist.email} already register`,
-      });
-    }
-    const salt = await bcrypt.genSalt(10);
-    console.log(salt);
-    const hashPassword = await bcrypt.hash(password, salt);
-    console.log(hashPassword);
-    req.body.password = hashPassword;
-    const user = new User(req.body);
-    await user.save();
-
-    res.status(201).json({
-      message: "User register sucessfully",
-      user,
-    });
-  } catch (err) {
-    res.status(500).json({
-      message: "Error: " + err.message,
-    });
-  }
-};
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
+    res.clearCookie("token");
     if (!user) {
       return res.status(400).json({
         success: false,
-        message: "Invalid username and password",
+        message: "Invalid username and passworddd",
       });
     }
     if (user.role === "user" && !user.isVerified) {
+      res.clearCookie("token");
       return res.status(400).json({
         success: false,
         message: "Please verify your email before logging in",
       });
     }
-    const isMatch = bcrypt.compare(password, user.password);
+    const isMatch = await bcrypt.compare(password, user.password);
+    console.log("isMatch:", isMatch);
+
     if (!isMatch) {
       return res.status(400).json({
         success: false,
         message: "Invalid username and password",
       });
     }
-    // 4. Generate OTP
-    // const otp = OTPService.generateOTP();
-    // OTPService.storeOTP(phone, otp);
-
-    // // 5. Send OTP
-    // await SMSService.sentOTP(phone, otp);
     const { password: _, ...userData } = user.toObject();
-    console.log();
     const accessToken = jwt.sign(userData, process.env.JWT_SECRET, {
       expiresIn: "7d",
     });
 
-    const refreshToken = jwt.sign(userData, process.env.JWT_REFRESH_SECRET, {
-      expiresIn: "7d",
-    });
     res.cookie("token", accessToken, {
       httpOnly: true,
       sameSite: "strict",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
-    // res.cookie("refreshToken", refreshToken, {
-    //   httpOnly: true,
-    //   sameSite: "strict",
-    //   maxAge: 7 * 24 * 60 * 60 * 1000,
-    // });
+
     res.status(200).json({
       success: true,
       message: "Login Sucessful",
@@ -183,15 +150,20 @@ exports.getProfile = async (req, res) => {
     //console.log(user);
     if (!user) {
       return res.status(404).json({
+        success: false,
         message: "User not found",
       });
     }
 
     res.status(200).json({
+      message: "Get user profile",
+
+      success: true,
       user,
     });
   } catch (err) {
     res.status(500).json({
+      success: false,
       message: "Error:" + err.message,
     });
   }
@@ -214,3 +186,85 @@ exports.logout = async (req, res) => {
     });
   }
 };
+
+exports.editProfile = async (req, res) => {
+  try {
+    const userId = req.user?._id;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
+
+    const { username } = req.body;
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    if (username !== undefined) {
+      user.username = username;
+    }
+
+    if (req.file) {
+      if (user.picture && !user.picture.includes("lh3.googleusercontent.com")) {
+        const publicId = user.picture
+          .split("/")
+          .slice(-2)
+          .join("/")
+          .split(".")[0];
+
+        await cloudinary.uploader.destroy(publicId);
+      }
+
+      user.picture = req.file.path;
+    }
+
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      user,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+// exports.registerMain = async (req, res) => {
+//   try {
+//     const { email, password } = req.body;
+//     const isUserExist = await User.findOne({ email });
+//     if (isUserExist) {
+//       return res.status(400).json({
+//         message: `User ${isUserExist.email} already register`,
+//       });
+//     }
+//     const salt = await bcrypt.genSalt(10);
+//     console.log(salt);
+//     const hashPassword = await bcrypt.hash(password, salt);
+//     console.log(hashPassword);
+//     req.body.password = hashPassword;
+//     const user = new User(req.body);
+//     await user.save();
+
+//     res.status(201).json({
+//       message: "User register sucessfully",
+//       user,
+//     });
+//   } catch (err) {
+//     res.status(500).json({
+//       message: "Error: " + err.message,
+//     });
+//   }
+// };

@@ -1,40 +1,48 @@
 const mongoose = require("mongoose");
 const Cart = require("../models/cart");
+const Product = require("../models/product");
 
 exports.createCart = async (req, res) => {
   try {
-    const { userId, productId, quantity } = req.body;
+    const { productId } = req.body;
+    const userId = req.user._id;
+    // Check if product exists
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({ message: "Product not found." });
+    }
+
+    // Check if the user already has a cart
     let cart = await Cart.findOne({ userId });
     if (!cart) {
+      // If the user doesn't have a cart, create a new one
       cart = new Cart({
-        userId: userId,
-        items: [
-          {
-            productId: productId,
-            quantity: quantity,
-          },
-        ],
+        userId,
+        items: [{ productId, quantity: 1 }],
       });
     } else {
-      const exisitingItem = cart.items.find(
-        //(item) => item.productId.toString() === productId.toString()
-        (item) => item.productId.equals(productId)
+      // If cart exists, check if the product is already in the cart
+      const existingItem = cart.items.find(
+        (item) => item.productId.toString() === productId
       );
-      if (exisitingItem) {
-        exisitingItem.quantity += quantity;
+
+      if (existingItem) {
+        // If the item exists, increase the quantity by 1
+        existingItem.quantity += 1;
       } else {
-        cart.items.push({ productId: productId, quantity: quantity });
+        // If the item doesn't exist, add it to the cart
+        cart.items.push({ productId, quantity: 1 });
       }
     }
+
     await cart.save();
-    return res.status(201).json({
-      message: "Cart Create Successful",
-      cart,
+    cart = await cart.populate({
+      path: "items.productId",
+      model: "Product",
     });
-  } catch (err) {
-    res.status(500).json({
-      message: "Error: " + err.message,
-    });
+    res.status(201).json({ message: "Cart created successfully", cart });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
 
@@ -61,39 +69,36 @@ exports.removeCart = async (req, res) => {
     });
   }
 };
+
 exports.removeCartItem = async (req, res) => {
   try {
-    const { userId, productId } = req.body;
-    //const objectUserId = new mongoose.Types.ObjectId(String(userId));
-    let cart = await Cart.findOne({ userId: userId });
+    const { productId } = req.params;
+    const userId = req.user._id;
+    let cart = await Cart.findOne({ userId });
+
     if (!cart) {
-      return res.status(404).json({
-        message: "Cart not found",
-      });
+      return res.status(404).json({ message: "Cart not found." });
     }
-    let newCard = cart.items.filter(
-      (item) => item.productId.toString() !== productId.toString()
+
+    const itemIndex = cart.items.findIndex(
+      (item) => item.productId.toString() === productId
     );
-    if (newCard.length === 0) {
-      await Cart.findOneAndDelete(userId);
-      return res.status(200).json({
-        message: "Cart is Empty and delete it",
-      });
+
+    if (itemIndex === -1) {
+      return res.status(404).json({ message: "Product not found in cart." });
     }
+    cart.items.splice(itemIndex, 1);
     await cart.save();
-    return res.status(200).json({
-      message: "Cart delete successful",
-    });
-  } catch (err) {
-    res.status(500).json({
-      message: "Error: " + err.message,
-    });
+
+    res.status(200).json({ message: "Cart item removed." });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
 exports.updateCartItemQuantity = async (req, res) => {
   try {
     const { productId } = req.params;
-    const userId = req.user.id;
+    const userId = req.user._id;
     const { quantity } = req.body;
 
     let cart = await Cart.findOne({ userId });
@@ -119,14 +124,43 @@ exports.updateCartItemQuantity = async (req, res) => {
     res.status(500).json({ message: "Error: " + error.message });
   }
 };
+// exports.updateCartItemQuantity = async (req, res) => {
+//   try {
+//     const { productId } = req.params;
+//     const userId = req.user._id;
+//     const { quantity } = req.body;
+
+//     let cart = await Cart.findOne({ userId });
+
+//     if (!cart) {
+//       return res.status(404).json({ message: "Cart not found." });
+//     }
+
+//     const existingItem = cart.items.find(
+//       (item) => item.productId.toString() === productId
+//     );
+
+//     if (!existingItem) {
+//       return res.status(404).json({ message: "Product not found in cart." });
+//     }
+
+//     existingItem.quantity = quantity;
+
+//     await cart.save();
+
+//     res.status(200).json({ message: "Cart item quantity updated." });
+//   } catch (error) {
+//     res.status(500).json({ message: "Error: " + error.message });
+//   }
+// };
 exports.getCart = async (req, res) => {
   try {
-    const userId = req.user.id;
-    // const userId = req.body;
+    const userId = req.user._id;
+    // const userId = req.body.userId;
 
     const cart = await Cart.findOne({ userId }).populate(
-      "items.productId",
-      "name price images unit"
+      "items.productId"
+      // "name price image unit"
     );
 
     if (!cart) {
@@ -147,3 +181,69 @@ exports.getCart = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// exports.createCartZ = async (req, res) => {
+//   try {
+//     const { userId, productId, quantity } = req.body;
+//     let cart = await Cart.findOne({ userId });
+//     if (!cart) {
+//       cart = new Cart({
+//         userId: userId,
+//         items: [
+//           {
+//             productId: productId,
+//             quantity: quantity,
+//           },
+//         ],
+//       });
+//     } else {
+//       const exisitingItem = cart.items.find(
+//         //(item) => item.productId.toString() === productId.toString()
+//         (item) => item.productId.equals(productId)
+//       );
+//       if (exisitingItem) {
+//         exisitingItem.quantity += quantity;
+//       } else {
+//         cart.items.push({ productId: productId, quantity: quantity });
+//       }
+//     }
+//     await cart.save();
+//     return res.status(201).json({
+//       message: "Cart Create Successful",
+//       cart,
+//     });
+//   } catch (err) {
+//     res.status(500).json({
+//       message: "Error: " + err.message,
+//     });
+//   }
+// };
+// exports.removeCartItemz = async (req, res) => {
+//   try {
+//     const { userId, productId } = req.body;
+//     //const objectUserId = new mongoose.Types.ObjectId(String(userId));
+//     let cart = await Cart.findOne({ userId: userId });
+//     if (!cart) {
+//       return res.status(404).json({
+//         message: "Cart not found",
+//       });
+//     }
+//     let newCard = cart.items.filter(
+//       (item) => item.productId.toString() !== productId.toString()
+//     );
+//     if (newCard.length === 0) {
+//       await Cart.findOneAndDelete(userId);
+//       return res.status(200).json({
+//         message: "Cart is Empty and delete it",
+//       });
+//     }
+//     await cart.save();
+//     return res.status(200).json({
+//       message: "Cart delete successful",
+//     });
+//   } catch (err) {
+//     res.status(500).json({
+//       message: "Error: " + err.message,
+//     });
+//   }
+// };

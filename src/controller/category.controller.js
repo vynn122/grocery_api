@@ -24,74 +24,74 @@ exports.get = async (req, res) => {
   }
 };
 
-exports.createZIN = async (req, res) => {
-  try {
-    const existingCategory = await Category.findOne({ name: req.body.name });
-    if (existingCategory) {
-      return res.status(400).json({
-        message: "Category already exists",
-      });
-    }
-    const category = new Category(req.body);
-    await category.save();
-    res.status(201).json({
-      success: true,
-      message: "Category create succesfull",
-      category,
-    });
-  } catch (err) {
-    res.status(500).json({
-      success: false,
-      message: "Error: " + err.message,
-    });
-  }
-};
-exports.updateZIn = async (req, res) => {
-  try {
-    const category = await Category.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-    });
-    if (!category) {
-      return res.status(404).json({
-        success: false,
-        message: "Category not found",
-      });
-    }
-    res.status(200).json({
-      success: true,
-      message: "Category update successful",
-      category,
-    });
-  } catch (err) {
-    res.status(500).json({
-      success: false,
-      message: "Error: " + err.message,
-    });
-  }
-};
-exports.deleteZin = (req, res) => {
-  Category.findByIdAndDelete(req.params.id)
-    .then((category) => {
-      if (!category) {
-        return res.status(404).json({
-          success: false,
+// exports.createZIN = async (req, res) => {
+//   try {
+//     const existingCategory = await Category.findOne({ name: req.body.name });
+//     if (existingCategory) {
+//       return res.status(400).json({
+//         message: "Category already exists",
+//       });
+//     }
+//     const category = new Category(req.body);
+//     await category.save();
+//     res.status(201).json({
+//       success: true,
+//       message: "Category create succesfull",
+//       category,
+//     });
+//   } catch (err) {
+//     res.status(500).json({
+//       success: false,
+//       message: "Error: " + err.message,
+//     });
+//   }
+// };
+// exports.updateZIn = async (req, res) => {
+//   try {
+//     const category = await Category.findByIdAndUpdate(req.params.id, req.body, {
+//       new: true,
+//     });
+//     if (!category) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Category not found",
+//       });
+//     }
+//     res.status(200).json({
+//       success: true,
+//       message: "Category update successful",
+//       category,
+//     });
+//   } catch (err) {
+//     res.status(500).json({
+//       success: false,
+//       message: "Error: " + err.message,
+//     });
+//   }
+// };
+// exports.deleteZin = (req, res) => {
+//   Category.findByIdAndDelete(req.params.id)
+//     .then((category) => {
+//       if (!category) {
+//         return res.status(404).json({
+//           success: false,
 
-          message: "Category not found",
-        });
-      }
-      res.status(200).json({
-        success: true,
-        message: "Category delete successful",
-        category,
-      });
-    })
-    .catch((err) => {
-      res.status(500).json({
-        success: false,
-        message: "Error: " + err.message,
-      });
-    });
-};
+//           message: "Category not found",
+//         });
+//       }
+//       res.status(200).json({
+//         success: true,
+//         message: "Category delete successful",
+//         category,
+//       });
+//     })
+//     .catch((err) => {
+//       res.status(500).json({
+//         success: false,
+//         message: "Error: " + err.message,
+//       });
+//     });
+// };
 exports.getById = async (req, res) => {
   try {
     const category = await Category.findById(req.params.id);
@@ -198,38 +198,38 @@ exports.update = async (req, res) => {
   }
 };
 
-exports.delete2 = async (req, res) => {
-  try {
-    const category = await Category.findById(req.params.id);
+// exports.delete2 = async (req, res) => {
+//   try {
+//     const category = await Category.findById(req.params.id);
 
-    if (!category) {
-      return res.status(404).json({
-        message: "Category not found",
-      });
-    }
+//     if (!category) {
+//       return res.status(404).json({
+//         message: "Category not found",
+//       });
+//     }
 
-    if (category.image) {
-      const publicId = category.image
-        .split("/")
-        .slice(-2)
-        .join("/")
-        .split(".")[0];
+//     if (category.image) {
+//       const publicId = category.image
+//         .split("/")
+//         .slice(-2)
+//         .join("/")
+//         .split(".")[0];
 
-      await cloudinary.uploader.destroy(publicId);
-    }
+//       await cloudinary.uploader.destroy(publicId);
+//     }
 
-    await Category.findByIdAndDelete(req.params.id);
+//     await Category.findByIdAndDelete(req.params.id);
 
-    res.status(200).json({
-      message: `Category ${category.name} deleted successfully`,
-    });
-  } catch (err) {
-    console.error("ERROR:", err);
-    res.status(500).json({
-      message: "Error: " + err.message,
-    });
-  }
-};
+//     res.status(200).json({
+//       message: `Category ${category.name} deleted successfully`,
+//     });
+//   } catch (err) {
+//     console.error("ERROR:", err);
+//     res.status(500).json({
+//       message: "Error: " + err.message,
+//     });
+//   }
+// };
 exports.delete = async (req, res) => {
   try {
     const category = await Category.findByIdAndDelete(req.params.id);

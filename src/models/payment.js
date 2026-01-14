@@ -71,7 +71,7 @@ const paymentSchema = new mongoose.Schema(
 
     paymentMethod: {
       type: String,
-      enum: ["ABA", "ACLEDA", "CASH_ON_HAND"],
+      enum: ["ABA", "ACLEDA", "CASH_ON_HAND", "KHQR"],
       required: true,
     },
 

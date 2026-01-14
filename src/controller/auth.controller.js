@@ -6,12 +6,19 @@ const jwt_secret = process.env.JWT_SECRET;
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const generateToken = (userId) => {
-  return jwt.sign({ id: userId }, jwt_secret, { expiresIn: "7d" });
+  return jwt.sign({ _id: userId }, jwt_secret, { expiresIn: "7d" });
 };
 
 exports.googleSignIn = async (req, res) => {
   try {
     const { idToken } = req.body;
+
+    if (idToken == null || idToken == undefined) {
+      return res.status(400).json({
+        success: false,
+        message: "No ID token bro",
+      });
+    }
 
     const tokenInfo = await client.verifyIdToken({
       idToken,
@@ -31,12 +38,16 @@ exports.googleSignIn = async (req, res) => {
     }
     const token = generateToken(user._id);
 
-    res
-      .status(201)
-      .json({ token: token, message: "Google signed in successfully." });
+    res.status(201).json({
+      success: true,
+      message: "Google signed in successfully.",
+      user: user,
+      token: token,
+    });
   } catch (err) {
     console.error(err);
     return res.status(401).json({
+      success: false,
       message: err.message,
     });
   }
