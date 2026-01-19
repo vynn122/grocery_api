@@ -7,13 +7,17 @@ exports.createReview = async (req, res) => {
   try {
     const userId = req.user._id;
     const { productId, rating, comment, images = [] } = req.body;
+    const reviewedOrderIds = await Review.find({
+      userId,
+      productId,
+    }).distinct("orderId");
 
-    //  Find the latest delivered/completed order containing this product
     const order = await Order.findOne({
       userId,
       "items.productId": new mongoose.Types.ObjectId(productId),
-      orderStatus: { $in: ["Delivered", "Completed", "Processing"] }, // only allow reviews for delivered/completed
-    }).sort({ createdAt: -1 }); // latest order first
+      orderStatus: { $in: ["Delivered", "Completed", "Processing"] },
+      _id: { $nin: reviewedOrderIds },
+    }).sort({ createdAt: -1 });
 
     if (!order) {
       return res.status(400).json({
@@ -22,20 +26,21 @@ exports.createReview = async (req, res) => {
       });
     }
 
-    //  Check if user already reviewed this product for this order
     const existing = await Review.findOne({
       userId,
       productId,
       orderId: order._id,
     });
+
     if (existing) {
       return res.status(400).json({
         success: false,
         message: "You already reviewed this product for this order",
+        orderId: order._id,
+        existing,
       });
     }
 
-    //  Create review
     const review = await Review.create({
       userId,
       productId,
@@ -46,7 +51,6 @@ exports.createReview = async (req, res) => {
       isVerifiedPurchase: true,
     });
 
-    //  Update product stats (only include non-hidden reviews)
     const stats = await Review.aggregate([
       {
         $match: {

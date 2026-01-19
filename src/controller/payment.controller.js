@@ -63,6 +63,24 @@ exports.createPayment = async (req, res) => {
       "BATTAMBANG",
       optionalData
     );
+    // let existingPayment = await Payment.findOne({ orderId });
+    // if (existingPayment) {
+    //   if (Date.now() > existingPayment.payment.expiration) {
+    //     // Expired → generate new QR
+    //     const qrData = khqr.generateIndividual(individualInfo);
+    //     existingPayment.payment.qr = qrData.data.qr;
+    //     existingPayment.payment.expiration = Date.now() + 5 * 60 * 1000;
+    //     await existingPayment.save();
+    //     return res
+    //       .status(200)
+    //       .json({ success: true, payment: existingPayment });
+    //   } else {
+    //     return res.status(400).json({
+    //       success: false,
+    //       message: "Payment already exists for this order",
+    //     });
+    //   }
+    // }
 
     const khqr = new BakongKHQR();
     // Await in case the function is async
@@ -210,7 +228,7 @@ exports.checkPayment = async (req, res) => {
     // update promo
     // if (order) promo.usedCount += 1;
     // promo.usedBy.push(order.userId);
-    // await promo.save();
+    // await promo.save();e
     // after payment is marked Paid
 
     if (order.promoId) {
