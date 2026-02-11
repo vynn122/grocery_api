@@ -15,7 +15,7 @@ const promoCodeSchema = new mongoose.Schema(
     isActive: { type: Boolean, default: true },
     usedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 module.exports = mongoose.model("PromoCode", promoCodeSchema);

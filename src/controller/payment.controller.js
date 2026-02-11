@@ -61,7 +61,7 @@ exports.createPayment = async (req, res) => {
       process.env.BAKONG_ACCOUNT_USERNAME,
       "Hem Theavin",
       "BATTAMBANG",
-      optionalData
+      optionalData,
     );
     // let existingPayment = await Payment.findOne({ orderId });
     // if (existingPayment) {
@@ -83,7 +83,6 @@ exports.createPayment = async (req, res) => {
     // }
 
     const khqr = new BakongKHQR();
-    // Await in case the function is async
     const qrData = khqr.generateIndividual(individualInfo);
 
     console.log("qrData response:", qrData);
@@ -99,7 +98,7 @@ exports.createPayment = async (req, res) => {
 
     const deepLink = `bakong://khqr?qr=${encodeURIComponent(qrData.data.qr)}`;
     const deepLinkWeb = `https://www.bakong.com.kh/khqr?qr=${encodeURIComponent(
-      qrData.data.qr
+      qrData.data.qr,
     )}`;
 
     const payment = await Payment.create({
@@ -182,7 +181,7 @@ exports.checkPayment = async (req, res) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ md5 }),
-      }
+      },
     );
 
     const data = await response.json();
@@ -201,7 +200,7 @@ exports.checkPayment = async (req, res) => {
     for (const item of order.items) {
       const updated = await Product.findOneAndUpdate(
         { _id: item.productId, stock: { $gte: item.quantity } },
-        { $inc: { stock: -item.quantity, sold: item.quantity } }
+        { $inc: { stock: -item.quantity, sold: item.quantity } },
       );
 
       if (!updated) {
