@@ -181,7 +181,6 @@ exports.update = async (req, res) => {
     if (req.file) {
       category.image = req.file.path;
     }
-
     await category.save();
 
     res.status(200).json({

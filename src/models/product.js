@@ -53,7 +53,7 @@ const productSchema = new mongoose.Schema(
     image: [{ type: String }],
     tags: [{ type: String, required: true }],
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 //
 // VIRTUAL FIELD: FINAL PRICE
